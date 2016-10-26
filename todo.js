@@ -1,23 +1,32 @@
 var log = function() {
     console.log.apply(console, arguments)
 }
-
+todoList = []
+//模板字符串插入todo
 var insert = function(todo) {
     var t =
         `
-        <div class="todo-cell" >
+        <div class="todo-cell ${todo.done}" >
             <button class='btn-complete btn btn-primary' type="button" name="button">完成</button>
             <button class='btn-del btn btn-primary' type="button" name="button">删除</button>
             <button class='btn-edit btn btn-primary' type="button" name="button">编辑</button>
-            <span class='span input form-control ' contenteditable="false">${todo}</span>
+            <span class='span input form-control ' contenteditable="false">${todo.task}</span>
         </div>
         `
     return t
 }
 //事件绑定
 $('#id-add').on('click', function(){
-    var todo = $('#id-input').val()
+    var task = $('#id-input').val()
+    var done = ''
+    var todo = {
+        'task': task,
+        'done': '',
+    }
+    todoList.push(todo)
+    log(todo)
     $('#id-todo-list').append(insert(todo))
+    saveTodos()
 })
 
 //事件删除
@@ -30,12 +39,6 @@ $('.btn-del').on('click', function(){
 // function绑定一个接受一个event,为你点击的按钮。
 //还有一种写法，使用this,不用event
 //$(this).closest('.todo-cell').remove()
-$('.btn-del').on('click', function(event){
-
-    $(event.target).closest('.todo-cell').remove()
-})
-
-//事件委托
 //删除弹窗提示
 var alert = function(title, message, callback) {
     $('document').ready(function(){
@@ -111,6 +114,12 @@ var alert = function(title, message, callback) {
 //删除功能
 $('#id-todo-list').on('click','.btn-del',function(event){
     alert('确认删除吗',' ', function() {
+            // log($(event.target))
+            var element = $(event.target)
+            // log(element.parent)
+            var index = indexOfElement(element.parent())
+            todoList.splice(index,1)
+            saveTodos()
             var del = $(event.target)
             del.closest('.todo-cell').remove()
     })
@@ -118,7 +127,7 @@ $('#id-todo-list').on('click','.btn-del',function(event){
 //完成功能
 $('#id-todo-list').on('click','.btn-complete',function(event){
     var complete = $(event.target)
-    log('comlete done')
+    // log('comlete done')
     var span = complete.closest('.todo-cell').find('span')
     span.toggleClass('done')
 })
@@ -139,3 +148,39 @@ $('#id-todo-list').on('keydown', '.span', function(event){
         event.preventDefault()
     }
 })
+// 保存添加的内容
+var saveTodos  = function() {
+    var s = JSON.stringify(todoList)
+    localStorage.todoList = s
+}
+
+//获取当前任务在父元素中的下标
+/*
+element 为 button按钮的父类‘todo-cell’
+*/
+
+var indexOfElement = function(element) {
+    var parent = element.parent()
+    log('element',element)
+    log('parent',parent)
+    for (var i = 0; i < parent.children.length; i++) {
+        var e = parent.children[i]
+        if (e == element) {
+            return i
+        }
+    }
+}
+//提取
+var loadTodos = function() {
+    var s = localStorage.todoList
+    return JSON.parse(s)
+}
+//加载todo
+var initTodos = function() {
+    todoList = loadTodos()
+    var l = todoList.length
+    for (var i = 0; i < l; i++) {
+        $('#id-todo-list').append(insert(todoList[i]))
+    }
+}
+initTodos()
